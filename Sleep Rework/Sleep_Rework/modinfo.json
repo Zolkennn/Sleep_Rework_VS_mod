@@ -1,0 +1,13 @@
+{
+  "type": "code",
+  "modid": "sleep_rework",
+  "name": "Sleep Rework",
+  "authors": [
+    "Zolkenn"
+  ],
+  "description": "To be added",
+  "version": "0.2.1",
+  "dependencies": {
+    "game": ""
+  }
+}
