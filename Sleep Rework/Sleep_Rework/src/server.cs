@@ -42,7 +42,7 @@ public class server : ModSystem
 
     private void SomeoneSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        sapi.Logger.Debug("Receive sleep from someone");
+        //sapi.Logger.Debug("Receive sleep from someone");
         ServerSleepEventId ??= sapi.Event.RegisterGameTickListener(ServerSleepTick, 20);
         FailSafeDate = sapi.World.Calendar.ElapsedHours;
 
@@ -110,7 +110,7 @@ public class server : ModSystem
 
     private void SomeoneUnSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        sapi.Logger.Debug("Receive Unsleep from someone");
+        //sapi.Logger.Debug("Receive Unsleep from someone");
 
         if (checkValidToSleep()) return;
 
@@ -118,8 +118,7 @@ public class server : ModSystem
 
 
         if (!enoughToSleeping) return;
-
-        sapi.Logger.Debug("la");
+        
         var message = new NetworksMessageAllSleepMode();
         message.On = false;
         serverChannel.BroadcastPacket(message);
@@ -128,7 +127,7 @@ public class server : ModSystem
 
     private void ServerSleepTick(float dt)
     {
-        sapi.Logger.Debug($"{sapi.World.Calendar.ElapsedHours} | {FailSafeDate}");
+        //sapi.Logger.Debug($"{sapi.World.Calendar.ElapsedHours} | {FailSafeDate}");
         if (sapi.World.Calendar.ElapsedHours - FailSafeDate > 24)
         {
             sapi.BroadcastMessageToAllGroups("Erreur MASSIVE du système de someils ne plus utilise les lits !!!",
@@ -145,8 +144,8 @@ public class server : ModSystem
 
         var hour = (int)sapi.World.Calendar.HourOfDay;
         var minute = (int)((sapi.World.Calendar.HourOfDay - hour) * 60f);
-        sapi.Logger.Debug(
-            $"{hour:00}:{minute:00} | enoughToSleeping: {enoughToSleeping} | tickShoudStop: {tickShoudStop} | GameSpeedBoost: {GameSpeedBoost}");
+        //sapi.Logger.Debug(
+        //    $"{hour:00}:{minute:00} | enoughToSleeping: {enoughToSleeping} | tickShoudStop: {tickShoudStop} | GameSpeedBoost: {GameSpeedBoost}");
 
         if (enoughToSleeping && sapi.World.Config.GetString("temporalStormSleeping", "0").ToInt() == 0 &&
             sapi.ModLoader.GetModSystem<SystemTemporalStability>().StormStrength > 0.0)

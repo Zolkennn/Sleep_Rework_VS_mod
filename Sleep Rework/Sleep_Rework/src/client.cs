@@ -56,13 +56,13 @@ public class client : ModSystem
 
     private void clientSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        capi.Logger.Debug("Client just sleep");
+        //capi.Logger.Debug("Client just sleep");
         clientTickId ??= capi.Event.RegisterGameTickListener(ClientTick, 20);
     }
 
     private void clientUnSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        capi.Logger.Debug("Client just unsleep");
+        //capi.Logger.Debug("Client just unsleep");
 
         clientTickShoudStop = true;
 
@@ -87,7 +87,7 @@ public class client : ModSystem
     private void serverInSleepingModChanged(NetworksMessageAllSleepMode networkMessage)
     {
         serverInSleepingMod = networkMessage.On;
-        capi.Logger.Debug($"Le sleepmode sur server est maintenant: {serverInSleepingMod}");
+        //capi.Logger.Debug($"Le sleepmode sur server est maintenant: {serverInSleepingMod}");
         if (networkMessage.On)
         {
             clientTickId ??= capi.Event.RegisterGameTickListener(ClientTick, 20);
@@ -99,8 +99,8 @@ public class client : ModSystem
 
     private void ClientTick(float dt)
     {
-        capi.Logger.Debug(
-            $"sleepLevel: {sleepLevel}, serverInSleepingMod: {serverInSleepingMod}, clientTickShoudStop: {clientTickShoudStop}, GameSpeedBoost: {GameSpeedBoost}");
+        //capi.Logger.Debug(
+         //   $"sleepLevel: {sleepLevel}, serverInSleepingMod: {serverInSleepingMod}, clientTickShoudStop: {clientTickShoudStop}, GameSpeedBoost: {GameSpeedBoost}");
         if (!clientTickShoudStop && !serverInSleepingMod && capi.World.Calendar.HourOfDay is > 7 and < 22)
         {
             capi.TriggerIngameError(this, "nottiredenough", Lang.Get("not-tired-enough"));
