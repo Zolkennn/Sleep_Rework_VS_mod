@@ -142,8 +142,8 @@ public class server : ModSystem
             return;
         }
 
-        var hour = (int)sapi.World.Calendar.HourOfDay;
-        var minute = (int)((sapi.World.Calendar.HourOfDay - hour) * 60f);
+        //var hour = (int)sapi.World.Calendar.HourOfDay;
+        //var minute = (int)((sapi.World.Calendar.HourOfDay - hour) * 60f);
         //sapi.Logger.Debug(
         //    $"{hour:00}:{minute:00} | enoughToSleeping: {enoughToSleeping} | tickShoudStop: {tickShoudStop} | GameSpeedBoost: {GameSpeedBoost}");
 
@@ -180,11 +180,20 @@ public class server : ModSystem
         }
 
 
-        if (GameSpeedBoost > 0 && sapi.World.Calendar.HourOfDay is > 7 and < 22) WakeAllPlayers();
+        if (GameSpeedBoost > 0 && sapi.World.Calendar.HourOfDay is > 7 and < 22 && !tickShoudStop)
+        {
+            //WakeAllPlayers();
+            var message = new NetworksMessageAllSleepMode();
+            message.On = false;
+            serverChannel.BroadcastPacket(message);
+            enoughToSleeping = false;
+            tickShoudStop = true;
+        }
     }
 
     public void WakeAllPlayers()
     {
+        //sapi.Logger.Debug("Server wakeup");
         sapi.World.Calendar.SetTimeSpeedModifier("sleeping", (int)GameSpeedBoost);
 
         foreach (var allOnlinePlayer in sapi.World.AllOnlinePlayers)
