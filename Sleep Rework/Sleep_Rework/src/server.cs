@@ -219,7 +219,7 @@ public class server : ModSystem
         if (byplayer.HasPrivilege(Privilege.time)) serverOpPlayerArray = serverOpPlayerArray.Append(byplayer);
 
         var behavior = byplayer.Entity.GetBehavior<EntityBehaviorTiredness>();
-        behavior.Tiredness = 12.0f; // todo patch slow tick from EntityBehaviorTiredness
+        behavior.Tiredness = 12.0f;
     }
 
     private void EventPlayerLeave(IServerPlayer byplayer)

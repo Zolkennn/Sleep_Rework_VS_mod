@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
@@ -62,6 +63,44 @@ public class patch : ModSystem
         }
 
         ___Api.Event.PushEvent("unsleepServer");
+    }
+    
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(BlockEntityBed), "DidMount")]
+    public static bool DidMount(BlockEntityBed __instance, EntityAgent entityAgent, ref string ___mountedByPlayerUid, ref long ___mountedByEntityId, ref double ___hoursTotal)
+    {
+        if (__instance.MountedBy != null && __instance.MountedBy != entityAgent)
+        {
+            entityAgent.TryUnmount();
+        }
+        else
+        {
+            if (__instance.MountedBy == entityAgent)
+                return false;
+            __instance.MountedBy = entityAgent;
+            ___mountedByPlayerUid = entityAgent is EntityPlayer entityPlayer ? entityPlayer.PlayerUID : (string) null;
+            ___mountedByEntityId = __instance.MountedBy.EntityId;
+            if (__instance.Api.Side == EnumAppSide.Server)
+            {
+                //__instance.RegisterGameTickListener(new Action<float>(___RestPlayer), 200); //todo à config
+                ___hoursTotal = __instance.Api.World.Calendar.TotalHours;
+            }
+            if (!(__instance.MountedBy?.GetBehavior("tiredness") is EntityBehaviorTiredness behavior))
+                return false;
+            behavior.IsSleeping = true;
+        }
+
+        return false;
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(EntityBehaviorTiredness), "SlowTick")]
+    public static void SlowTick(EntityBehaviorTiredness __instance)
+    {
+        if (__instance.entity.World.Side == EnumAppSide.Server && !__instance.IsSleeping)
+        {
+            __instance.Tiredness = 12;
+        }
     }
 
     public override void Dispose()

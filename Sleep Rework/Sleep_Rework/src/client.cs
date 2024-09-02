@@ -62,7 +62,7 @@ public class client : ModSystem
 
     private void clientUnSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        capi.Logger.Debug("Client just unsleep");
+        //capi.Logger.Debug("Client just unsleep");
 
         clientTickShoudStop = true;
 
@@ -87,7 +87,7 @@ public class client : ModSystem
     private void serverInSleepingModChanged(NetworksMessageAllSleepMode networkMessage)
     {
         serverInSleepingMod = networkMessage.On;
-        capi.Logger.Debug($"Le sleepmode sur server est maintenant: {serverInSleepingMod}");
+        //capi.Logger.Debug($"Le sleepmode sur server est maintenant: {serverInSleepingMod}");
         if (networkMessage.On)
         {
             clientTickId ??= capi.Event.RegisterGameTickListener(ClientTick, 20);
@@ -99,8 +99,7 @@ public class client : ModSystem
 
     private void ClientTick(float dt)
     {
-        capi.Logger.Debug($"sleepLevel: {sleepLevel}, serverInSleepingMod: {serverInSleepingMod}, clientTickShoudStop: {clientTickShoudStop}, GameSpeedBoost: {GameSpeedBoost}");
-        capi.Logger.Debug(capi.World.Player.Entity.GetBehavior<EntityBehaviorTiredness>().Tiredness.ToString());
+        //capi.Logger.Debug($"sleepLevel: {sleepLevel}, serverInSleepingMod: {serverInSleepingMod}, clientTickShoudStop: {clientTickShoudStop}, GameSpeedBoost: {GameSpeedBoost}, tiredness {capi.World.Player.Entity.GetBehavior<EntityBehaviorTiredness>().Tiredness}");
         if (!clientTickShoudStop && !serverInSleepingMod && capi.World.Calendar.HourOfDay is > 7 and < 22)
         {
             capi.TriggerIngameError(this, "nottiredenough", Lang.Get("not-tired-enough"));
@@ -141,7 +140,7 @@ public class client : ModSystem
 
     private void WakeClientPlayers()
     {
-        capi.Logger.Debug("client wakeup");
+        //capi.Logger.Debug("client wakeup");
         var behavior = capi.World.Player.Entity.GetBehavior<EntityBehaviorTiredness>();
         if ((behavior != null ? behavior.IsSleeping ? 1 : 0 : 0) != 0)
             capi.World.Player?.Entity.TryUnmount();
