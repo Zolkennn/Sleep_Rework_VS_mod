@@ -25,19 +25,7 @@ public class patch : ModSystem
     {
         return false;
     }
-
-    //[HarmonyPrefix]
-    //[HarmonyPatch(typeof(BlockBed), "OnBlockInteractStart")]
-    //public static bool OnBlockInteractStartore(BlockBed __instance, ICoreAPI ___api, IWorldAccessor world)
-    //{
-    //    if (___api.Side == EnumAppSide.Client && world.Calendar.HourOfDay is > 7 and < 22)
-    //    {
-    //        (___api as ICoreClientAPI)!.TriggerIngameError(__instance, "nottiredenough", Lang.Get("not-tired-enough"));
-    //        return false;
-    //    }
-    //    return true;
-    //}
-
+    
     [HarmonyPostfix]
     [HarmonyPatch(typeof(BlockBed), "OnBlockInteractStart")]
     public static void OnBlockInteractStart(bool __result, ICoreAPI ___api, IWorldAccessor world)
@@ -82,10 +70,10 @@ public class patch : ModSystem
             ___mountedByEntityId = __instance.MountedBy.EntityId;
             if (__instance.Api.Side == EnumAppSide.Server)
             {
-                //__instance.RegisterGameTickListener(new Action<float>(___RestPlayer), 200); //todo à config
+                //__instance.RegisterGameTickListener(new Action<float>(___RestPlayer), 200); //todo à config (possiblement nap)
                 ___hoursTotal = __instance.Api.World.Calendar.TotalHours;
             }
-            if (!(__instance.MountedBy?.GetBehavior("tiredness") is EntityBehaviorTiredness behavior))
+            if (__instance.MountedBy?.GetBehavior("tiredness") is not EntityBehaviorTiredness behavior)
                 return false;
             behavior.IsSleeping = true;
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using CommonLib.Config;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -25,6 +26,7 @@ public class client : ModSystem
     private EyesOverlayRenderer renderer;
     private bool serverInSleepingMod;
     private float sleepLevel;
+    private Config config;
 
     public string VertexShaderCode =
         "\r\n#version 330 core\r\n#extension GL_ARB_explicit_attrib_location: enable\r\n\r\nlayout(location = 0) in vec3 vertex;\r\n\r\nout vec2 uv;\r\n\r\nvoid main(void)\r\n{\r\n    gl_Position = vec4(vertex.xy, 0, 1);\r\n    uv = (vertex.xy + 1.0) / 2.0;\r\n}\r\n";
@@ -52,23 +54,18 @@ public class client : ModSystem
         clientChannel = api.Network.RegisterChannel("sleeping")
             .RegisterMessageType(typeof(NetworksMessageAllSleepMode)).SetMessageHandler(
                 new NetworkServerMessageHandler<NetworksMessageAllSleepMode>(serverInSleepingModChanged));
+        
+        config = capi.ModLoader.GetModSystem<ConfigManager>().GetConfig<Config>();
     }
 
     private void clientSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        //capi.Logger.Debug("Client just sleep");
         clientTickId ??= capi.Event.RegisterGameTickListener(ClientTick, 20);
     }
 
     private void clientUnSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        //capi.Logger.Debug("Client just unsleep");
-
         clientTickShoudStop = true;
-
-        //if (clientTickId != null) capi.Event.UnregisterGameTickListener((long)clientTickId);
-        //clientTickId = null;
-        //capi.TriggerIngameError(this, "", "");
     }
 
     public bool LoadShader()
@@ -87,20 +84,21 @@ public class client : ModSystem
     private void serverInSleepingModChanged(NetworksMessageAllSleepMode networkMessage)
     {
         serverInSleepingMod = networkMessage.On;
-        //capi.Logger.Debug($"Le sleepmode sur server est maintenant: {serverInSleepingMod}");
         if (networkMessage.On)
         {
             clientTickId ??= capi.Event.RegisterGameTickListener(ClientTick, 20);
             return;
         }
 
-        if (clientTickId != null) clientTickShoudStop = true;
+        //if (clientTickId != null) clientTickShoudStop = true;
     }
 
     private void ClientTick(float dt)
     {
-        //capi.Logger.Debug($"sleepLevel: {sleepLevel}, serverInSleepingMod: {serverInSleepingMod}, clientTickShoudStop: {clientTickShoudStop}, GameSpeedBoost: {GameSpeedBoost}, tiredness {capi.World.Player.Entity.GetBehavior<EntityBehaviorTiredness>().Tiredness}");
-        if (!clientTickShoudStop && !serverInSleepingMod && capi.World.Calendar.HourOfDay is > 7 and < 22)
+        var hour = (int)capi.World.Calendar.HourOfDay;
+        var minute = (int)((capi.World.Calendar.HourOfDay - hour) * 60f);
+        capi.Logger.Debug($"{hour:00}:{minute:00} | sleepLevel: {sleepLevel}, serverInSleepingMod: {serverInSleepingMod}, clientTickShoudStop: {clientTickShoudStop}, GameSpeedBoost: {GameSpeedBoost}, tiredness {capi.World.Player.Entity.GetBehavior<EntityBehaviorTiredness>().Tiredness}");
+        if (!clientTickShoudStop && GameSpeedBoost == 0 && !serverInSleepingMod && capi.World.Calendar.HourOfDay > config.MorningHours && capi.World.Calendar.HourOfDay < config.EveningHours)
         {
             capi.TriggerIngameError(this, "nottiredenough", Lang.Get("not-tired-enough"));
             return;
@@ -125,7 +123,7 @@ public class client : ModSystem
                 clientTickId = null;
                 capi.World.Calendar.SetTimeSpeedModifier("sleeping", 0);
                 capi.TriggerIngameError(this, "", "");
-                //WakeClientPlayers();
+                //WakeClientPlayers(); todo nap
                 renderer.Level = sleepLevel;
                 clientTickShoudStop = false;
                 return;

@@ -3,6 +3,18 @@
     "Client": {
       "commandName": "Executable",
       "executablePath": "dotnet",
+      "commandLineArgs": "\"$(VINTAGE_STORY)/Vintagestory.dll\" --tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\" --dataPath \"$(ProjectDir)/game/client1\"",
+      "workingDirectory": "$(VINTAGE_STORY)"
+    },
+    "Client2": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "\"$(VINTAGE_STORY)/Vintagestory.dll\" --tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\" --dataPath \"$(ProjectDir)/game/client2\"",
+      "workingDirectory": "$(VINTAGE_STORY)"
+    },
+    "Client3": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
       "commandLineArgs": "\"$(VINTAGE_STORY)/Vintagestory.dll\" --tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\"",
       "workingDirectory": "$(VINTAGE_STORY)"
     },

@@ -8,6 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Reference Include="CommonLib">
+          <HintPath>..\..\..\..\.local\share\vintagestory\CommonLib_VS1.19.8_net7_v2.5.0-rc.2\CommonLib.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
         <Reference Include="VintagestoryAPI">
             <HintPath>$(VINTAGE_STORY)/VintagestoryAPI.dll</HintPath>
             <Private>false</Private>
@@ -61,6 +65,11 @@
         <Content Include="modinfo.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="game\client1\" />
+      <Folder Include="game\client2\" />
     </ItemGroup>
 
 </Project>
