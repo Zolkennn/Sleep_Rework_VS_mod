@@ -12,15 +12,16 @@ using Vintagestory.GameContent;
 
 namespace Custom_Sleep;
 
-public class server : ModSystem
+public class Server : ModSystem
 {
     private bool enoughToSleep;
-    private double FailSafeDate;
-    private float GameSpeedBoost;
+    private bool timeAccelerated;
+    private double failSafeDate;
+    private float gameSpeedBoost;
     private ICoreServerAPI sapi;
     private IServerNetworkChannel serverChannel;
     private IServerPlayer[] serverOpPlayerArray = Array.Empty<IServerPlayer>(); //todo a supprimer
-    private long? ServerSleepEventId;
+    private long? serverSleepEventId;
     private bool tickShoudStop;
     private Config config;
 
@@ -50,23 +51,21 @@ public class server : ModSystem
 
     private void SomeoneSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        ServerSleepEventId ??= sapi.Event.RegisterGameTickListener(ServerSleepTick, 20);
-        FailSafeDate = sapi.World.Calendar.ElapsedHours;
+        serverSleepEventId ??= sapi.Event.RegisterGameTickListener(ServerSleepTick, 20);
+        failSafeDate = sapi.World.Calendar.ElapsedHours;
 
 
-        if (!checkValidToSleep()) return;
+        if (enoughToSleep || !CheckEnoughToSleep()) return;
         
-        var message = new NetworksMessageAllSleepMode();
-        message.On = true;
-        serverChannel.BroadcastPacket(message);
+        //var message = new NetworksMessageAllSleepMode();
+        //message.On = true;
+        //serverChannel.BroadcastPacket(message);
         enoughToSleep = true;
     }
 
-    private bool checkValidToSleep(string bypassUID = null)
+    private bool CheckEnoughToSleep(string bypassUid = null)
     {
-        if (config.ValidHours && sapi.World.Calendar.HourOfDay > config.MorningHours && sapi.World.Calendar.HourOfDay < config.EveningHours) return false;
-
-        var (playerSleeping, playerNotSleeping) = NumberPlayerSleeping(bypassUID);
+        var (playerSleeping, playerNotSleeping) = NumberPlayerSleeping(bypassUid);
 
         if (playerNotSleeping == 0) return true;
         if (playerSleeping == 0) return false;
@@ -74,23 +73,18 @@ public class server : ModSystem
         var percentPlayerSleeping = playerSleeping / (float)(playerSleeping + playerNotSleeping);
 
         if (!(percentPlayerSleeping < 0.80)) return true;
-        
-        
-        //todo à tester
-        foreach (var player in sapi.World.AllOnlinePlayers.Where(x => x.WorldData.CurrentGameMode == EnumGameMode.Creative))
-            (player as IServerPlayer).SendIngameError("", $"{percentPlayerSleeping * 100}%/80% joueurs dorment");
 
         return false;
     }
 
     // Case witout counting creative nor spectators players
-    private (int playerSleeping, int playerNotSleeping) NumberPlayerSleeping(string bypassUID)
+    private (int playerSleeping, int playerNotSleeping) NumberPlayerSleeping(string bypassUid)
     {
         var playerSleeping = 0;
         var playerNotSleeping = 0;
         var allOnlinePlayers = sapi.World.AllOnlinePlayers as IServerPlayer[];
         foreach (var serverPlayer in allOnlinePlayers)
-            if (serverPlayer!.ConnectionState == EnumClientState.Playing && serverPlayer.WorldData.CurrentGameMode != EnumGameMode.Spectator && serverPlayer.PlayerUID != bypassUID)
+            if (serverPlayer!.ConnectionState == EnumClientState.Playing && serverPlayer.WorldData.CurrentGameMode != EnumGameMode.Spectator && serverPlayer.PlayerUID != bypassUid)
             {
                 var behavior = serverPlayer.Entity.GetBehavior<EntityBehaviorTiredness>();
                 if ((behavior != null ? behavior.IsSleeping ? 1 : 0 : 0) != 0)
@@ -108,89 +102,91 @@ public class server : ModSystem
     {
         //sapi.Logger.Debug("Receive Unsleep from someone");
 
-        if (checkValidToSleep()) return;
+        if (CheckEnoughToSleep()) return;
 
-        if (ServerSleepEventId != null && NumberPlayerSleeping("").playerSleeping == 0) tickShoudStop = true;
-
-
+        if (serverSleepEventId != null && NumberPlayerSleeping("").playerSleeping == 0) tickShoudStop = true;
+        
         if (!enoughToSleep) return;
         
-        var message = new NetworksMessageAllSleepMode();
-        message.On = false;
-        serverChannel.BroadcastPacket(message);
+        //var message = new NetworksMessageAllSleepMode();
+        //message.On = false;
+        //serverChannel.BroadcastPacket(message);
         enoughToSleep = false;
     }
 
     private void ServerSleepTick(float dt)
     {
         //sapi.Logger.Debug($"{sapi.World.Calendar.ElapsedHours} | {FailSafeDate}");
-        if (sapi.World.Calendar.ElapsedHours - FailSafeDate > 24)
+        if (sapi.World.Calendar.ElapsedHours - failSafeDate > 24)
         {
             sapi.BroadcastMessageToAllGroups("Erreur MASSIVE du système de someils ne plus utilise les lits !!!",
                 EnumChatType.AllGroups);
 
-            Debug.Assert(ServerSleepEventId != null, nameof(ServerSleepEventId) + " != null");
-            sapi.Event.UnregisterGameTickListener((long)ServerSleepEventId);
-            ServerSleepEventId = null;
+            Debug.Assert(serverSleepEventId != null, nameof(serverSleepEventId) + " != null");
+            sapi.Event.UnregisterGameTickListener((long)serverSleepEventId);
+            serverSleepEventId = null;
             sapi.World.Calendar.SetTimeSpeedModifier("sleeping", 0);
             tickShoudStop = false;
+            gameSpeedBoost = 0;
 
             return;
         }
 
         var hour = (int)sapi.World.Calendar.HourOfDay;
         var minute = (int)((sapi.World.Calendar.HourOfDay - hour) * 60f);
-        sapi.Logger.Debug(
-            $"{hour:00}:{minute:00} | enoughToSleeping: {enoughToSleep} | tickShoudStop: {tickShoudStop} | GameSpeedBoost: {GameSpeedBoost}");
-
-        if (enoughToSleep && sapi.World.Config.GetString("temporalStormSleeping", "0").ToInt() == 0 &&
+        sapi.Logger.Debug($"{hour:00}:{minute:00} | enoughToSleeping: {enoughToSleep && CheckHours()} | tickShoudStop: {tickShoudStop} | GameSpeedBoost: {gameSpeedBoost}");
+        
+        if (sapi.World.Config.GetString("temporalStormSleeping", "0").ToInt() == 0 &&
             sapi.ModLoader.GetModSystem<SystemTemporalStability>().StormStrength > 0.0)
         {
+            // il y a un orrage
             WakeAllPlayers();
         }
-        else
+        
+        if (tickShoudStop && gameSpeedBoost == 0.0)
         {
-            if (tickShoudStop && GameSpeedBoost == 0.0 && !enoughToSleep)
-            {
-                Debug.Assert(ServerSleepEventId != null, nameof(ServerSleepEventId) + " != null");
-                sapi.Event.UnregisterGameTickListener((long)ServerSleepEventId);
-                ServerSleepEventId = null;
-                sapi.World.Calendar.SetTimeSpeedModifier("sleeping", 0);
-                tickShoudStop = false;
-                return;
-            }
+            Debug.Assert(serverSleepEventId != null, nameof(serverSleepEventId) + " != null");
+            sapi.Event.UnregisterGameTickListener((long)serverSleepEventId);
+            serverSleepEventId = null;
+            sapi.World.Calendar.SetTimeSpeedModifier("sleeping", 0);
+            tickShoudStop = false;
+            return;
+        }
+        
+        if (gameSpeedBoost == 0 && (!enoughToSleep || !CheckHours())) return;
 
-            if (GameSpeedBoost <= 0.0 && !enoughToSleep)
-            {
-                if (!checkValidToSleep()) return;
-
-                var message = new NetworksMessageAllSleepMode();
-                message.On = true;
-                serverChannel.BroadcastPacket(message);
-                enoughToSleep = true;
-                return;
-            }
-
-            GameSpeedBoost = GameMath.Clamp(GameSpeedBoost + dt * (enoughToSleep ? 400f : -2000f), 0.0f, 17000f);
-            sapi.World.Calendar.SetTimeSpeedModifier("sleeping", (int)GameSpeedBoost);
+        //Pas d'accélération mais valid
+        if (gameSpeedBoost == 0 && enoughToSleep && CheckHours())
+        {
+            var message = new NetworksMessageAllSleepMode();
+            message.On = true;
+            serverChannel.BroadcastPacket(message);
         }
 
-
-        //todo ???
-        if (GameSpeedBoost > 0 && (config.ValidHours && sapi.World.Calendar.HourOfDay > config.MorningHours && sapi.World.Calendar.HourOfDay < config.EveningHours) && enoughToSleep)
+        gameSpeedBoost = GameMath.Clamp(gameSpeedBoost + dt * (enoughToSleep && CheckHours() ? 400f : -2000f), 0.0f, 17000f);
+        sapi.World.Calendar.SetTimeSpeedModifier("sleeping", (int)gameSpeedBoost);
+        
+        sapi.Logger.Debug($"{!enoughToSleep} | {!CheckHours()}");
+        if (gameSpeedBoost > 0 && !enoughToSleep || !CheckHours())
         {
-            //WakeAllPlayers();
+            // la partie est accélérer mais n'est plus valide 
             var message = new NetworksMessageAllSleepMode();
             message.On = false;
             serverChannel.BroadcastPacket(message);
-            enoughToSleep = false;
         }
+    }
+
+    private bool CheckHours()
+    {
+        //todo config 
+        return config.ValidHours && !(sapi.World.Calendar.HourOfDay > config.MorningHours &&
+                                     sapi.World.Calendar.HourOfDay < config.EveningHours);
     }
 
     public void WakeAllPlayers()
     {
         //sapi.Logger.Debug("Server wakeup");
-        sapi.World.Calendar.SetTimeSpeedModifier("sleeping", (int)GameSpeedBoost);
+        sapi.World.Calendar.SetTimeSpeedModifier("sleeping", (int)gameSpeedBoost);
 
         foreach (var allOnlinePlayer in sapi.World.AllOnlinePlayers)
         {
@@ -226,7 +222,7 @@ public class server : ModSystem
         if (serverOpPlayerArray.Contains(byplayer)) serverOpPlayerArray = serverOpPlayerArray.Remove(byplayer);
 
         var numberPlayerSleeping = NumberPlayerSleeping(byplayer.PlayerUID);
-        if (ServerSleepEventId != null && numberPlayerSleeping.playerSleeping == 0) tickShoudStop = true;
+        if (serverSleepEventId != null && numberPlayerSleeping.playerSleeping == 0) tickShoudStop = true;
 
         //todo quand joueur quite alors que ct le seul a dormir et quite et que nrml la nuit peut passé
     }
@@ -234,6 +230,6 @@ public class server : ModSystem
     private void EventSaveGameLoaded()
     {
         sapi.World.Calendar?.RemoveTimeSpeedModifier("sleeping");
-        GameSpeedBoost = 0.0f;
+        gameSpeedBoost = 0.0f;
     }
 }

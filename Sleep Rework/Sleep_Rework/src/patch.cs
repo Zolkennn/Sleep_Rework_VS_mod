@@ -1,7 +1,10 @@
 using System;
 using HarmonyLib;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
+using StringAttribute = Vintagestory.API.Datastructures.StringAttribute;
 
 namespace Custom_Sleep;
 
@@ -28,7 +31,7 @@ public class patch : ModSystem
     
     [HarmonyPostfix]
     [HarmonyPatch(typeof(BlockBed), "OnBlockInteractStart")]
-    public static void OnBlockInteractStart(bool __result, ICoreAPI ___api, IWorldAccessor world)
+    public static void OnBlockInteractStart(bool __result, ICoreAPI ___api)
     {
         if (!__result) return;
         if (___api.Side == EnumAppSide.Client)
@@ -42,11 +45,11 @@ public class patch : ModSystem
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(BlockEntityBed), "DidUnmount")]
-    public static void DidUnmount(ICoreAPI ___Api)
+    public static void DidUnmount(ICoreAPI ___Api, EntityAgent entityAgent)
     {
         if (___Api.Side == EnumAppSide.Client)
         {
-            ___Api.Event.PushEvent("unsleepClient");
+            ___Api.Event.PushEvent("unsleepClient", new LongAttribute(entityAgent.EntityId));
             return;
         }
 
@@ -87,7 +90,7 @@ public class patch : ModSystem
     {
         if (__instance.entity.World.Side == EnumAppSide.Server && !__instance.IsSleeping)
         {
-            __instance.Tiredness = 12;
+            __instance.Tiredness = 12; //todo nap
         }
     }
 

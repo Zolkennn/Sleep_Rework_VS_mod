@@ -61,11 +61,12 @@ public class client : ModSystem
     private void clientSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
         clientTickId ??= capi.Event.RegisterGameTickListener(ClientTick, 20);
+        clientTickShoudStop = false;
     }
 
     private void clientUnSleep(string eventname, ref EnumHandling handling, IAttribute data)
     {
-        clientTickShoudStop = true;
+        if (capi.World.Player.Entity.EntityId == data.GetValue() as long?) clientTickShoudStop = true;
     }
 
     public bool LoadShader()
