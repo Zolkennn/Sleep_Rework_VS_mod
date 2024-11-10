@@ -72,7 +72,7 @@ public class Server : ModSystem
 
         var percentPlayerSleeping = playerSleeping / (float)(playerSleeping + playerNotSleeping);
 
-        if (!(percentPlayerSleeping < 0.80)) return true;
+        if (!(percentPlayerSleeping < config.SleepingPercent)) return true;
 
         return false;
     }
@@ -83,18 +83,27 @@ public class Server : ModSystem
         var playerSleeping = 0;
         var playerNotSleeping = 0;
         var allOnlinePlayers = sapi.World.AllOnlinePlayers as IServerPlayer[];
+        var count = allOnlinePlayers.Count(serverPlayer => serverPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative && serverPlayer.WorldData.CurrentGameMode != EnumGameMode.Spectator);
+        bool onlyOpPlayer = count == 0;
+    
         foreach (var serverPlayer in allOnlinePlayers)
-            if (serverPlayer!.ConnectionState == EnumClientState.Playing && serverPlayer.WorldData.CurrentGameMode != EnumGameMode.Spectator && serverPlayer.PlayerUID != bypassUid)
+        {
+            if (!onlyOpPlayer && !config.CountCreativePlayers && serverPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative) {continue;}
+            if (!onlyOpPlayer && !config.CountSpectatorPlayers && serverPlayer.WorldData.CurrentGameMode == EnumGameMode.Spectator) {continue;}
+
+            if (serverPlayer!.ConnectionState != EnumClientState.Playing ||
+                serverPlayer.PlayerUID == bypassUid) continue;
+            var behavior = serverPlayer.Entity.GetBehavior<EntityBehaviorTiredness>();
+            if ((behavior != null ? behavior.IsSleeping ? 1 : 0 : 0) != 0)
             {
-                var behavior = serverPlayer.Entity.GetBehavior<EntityBehaviorTiredness>();
-                if ((behavior != null ? behavior.IsSleeping ? 1 : 0 : 0) != 0)
-                {
-                    ++playerSleeping;
-                    continue;
-                }
-                ++playerNotSleeping;
+                ++playerSleeping;
+                continue;
             }
 
+            ++playerNotSleeping;
+        }
+        
+        sapi.Logger.Debug($"{playerSleeping}, {playerNotSleeping}");
         return (playerSleeping, playerNotSleeping);
     }
 
@@ -166,7 +175,6 @@ public class Server : ModSystem
         gameSpeedBoost = GameMath.Clamp(gameSpeedBoost + dt * (enoughToSleep && CheckHours() ? 400f : -2000f), 0.0f, 17000f);
         sapi.World.Calendar.SetTimeSpeedModifier("sleeping", (int)gameSpeedBoost);
         
-        sapi.Logger.Debug($"{!enoughToSleep} | {!CheckHours()}");
         if (gameSpeedBoost > 0 && !enoughToSleep || !CheckHours())
         {
             // la partie est accélérer mais n'est plus valide 

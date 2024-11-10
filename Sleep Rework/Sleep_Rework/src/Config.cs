@@ -5,14 +5,21 @@ namespace Custom_Sleep;
 [Config("SleepRework.json")]
 public class Config
 {
-    [Description("Enable the seeping percent")]
-    public bool SleepingPercent { get; set; } = true;
+    [Description("Percent of player spleeping to skip the night")]
+    [Range(0.0f, 1.0f)]
+    public float SleepingPercent { get; set; } = 0.8f;
+    
+    [Description("Count creative player in the percent")]
+    public bool CountCreativePlayers { get; set; } = true;
+    
+    [Description("Count spectator player in the percent")]
+    public bool CountSpectatorPlayers { get; set; } = false;
     
     [Description("Can the players nap the day ? (perfect for RP)")]
     public bool Nap { get; set; } = true;
     
     [Description("Does the game speed during the sleep instantly stop")]
-    public bool instantStop { get; set; } = true;
+    public bool InstantStop { get; set; } = true;
     
     [Description("Can the player only sleep during valid time")]
     public bool ValidHours { get; set; } = true;

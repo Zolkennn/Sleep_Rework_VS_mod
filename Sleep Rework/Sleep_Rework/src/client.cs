@@ -91,7 +91,7 @@ public class client : ModSystem
             return;
         }
 
-        //if (clientTickId != null) clientTickShoudStop = true;
+        if (clientTickId != null) clientTickShoudStop = true;
     }
 
     private void ClientTick(float dt)
