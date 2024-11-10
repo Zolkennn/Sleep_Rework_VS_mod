@@ -103,7 +103,7 @@ public class Server : ModSystem
             ++playerNotSleeping;
         }
         
-        sapi.Logger.Debug($"{playerSleeping}, {playerNotSleeping}");
+        //sapi.Logger.Debug($"{playerSleeping}, {playerNotSleeping}");
         return (playerSleeping, playerNotSleeping);
     }
 
@@ -141,9 +141,9 @@ public class Server : ModSystem
             return;
         }
 
-        var hour = (int)sapi.World.Calendar.HourOfDay;
-        var minute = (int)((sapi.World.Calendar.HourOfDay - hour) * 60f);
-        sapi.Logger.Debug($"{hour:00}:{minute:00} | enoughToSleeping: {enoughToSleep && CheckHours()} | tickShoudStop: {tickShoudStop} | GameSpeedBoost: {gameSpeedBoost}");
+        //var hour = (int)sapi.World.Calendar.HourOfDay;
+        //var minute = (int)((sapi.World.Calendar.HourOfDay - hour) * 60f);
+        //sapi.Logger.Debug($"{hour:00}:{minute:00} | enoughToSleeping: {enoughToSleep && CheckHours()} | tickShoudStop: {tickShoudStop} | GameSpeedBoost: {gameSpeedBoost}");
         
         if (sapi.World.Config.GetString("temporalStormSleeping", "0").ToInt() == 0 &&
             sapi.ModLoader.GetModSystem<SystemTemporalStability>().StormStrength > 0.0)

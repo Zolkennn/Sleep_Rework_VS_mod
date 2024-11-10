@@ -18,10 +18,10 @@ public class Config
     [Description("Can the players nap the day ? (perfect for RP)")]
     public bool Nap { get; set; } = true;
     
-    [Description("Does the game speed during the sleep instantly stop")]
+    [Description("Does the game speed during the sleep instantly stop Not Implemented Yet")]
     public bool InstantStop { get; set; } = true;
     
-    [Description("Can the player only sleep during valid time")]
+    [Description("Can the player only sleep during valid time Not Implemented Yet")]
     public bool ValidHours { get; set; } = true;
 
     [Description("At what hours the player automaticly wakeup (need ValidHours)")]

@@ -96,9 +96,9 @@ public class client : ModSystem
 
     private void ClientTick(float dt)
     {
-        var hour = (int)capi.World.Calendar.HourOfDay;
-        var minute = (int)((capi.World.Calendar.HourOfDay - hour) * 60f);
-        capi.Logger.Debug($"{hour:00}:{minute:00} | sleepLevel: {sleepLevel}, serverInSleepingMod: {serverInSleepingMod}, clientTickShoudStop: {clientTickShoudStop}, GameSpeedBoost: {GameSpeedBoost}, tiredness {capi.World.Player.Entity.GetBehavior<EntityBehaviorTiredness>().Tiredness}");
+        //var hour = (int)capi.World.Calendar.HourOfDay;
+        //var minute = (int)((capi.World.Calendar.HourOfDay - hour) * 60f);
+        //capi.Logger.Debug($"{hour:00}:{minute:00} | sleepLevel: {sleepLevel}, serverInSleepingMod: {serverInSleepingMod}, clientTickShoudStop: {clientTickShoudStop}, GameSpeedBoost: {GameSpeedBoost}, tiredness {capi.World.Player.Entity.GetBehavior<EntityBehaviorTiredness>().Tiredness}");
         if (!clientTickShoudStop && GameSpeedBoost == 0 && !serverInSleepingMod && capi.World.Calendar.HourOfDay > config.MorningHours && capi.World.Calendar.HourOfDay < config.EveningHours)
         {
             capi.TriggerIngameError(this, "nottiredenough", Lang.Get("not-tired-enough"));
